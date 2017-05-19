@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jscherman/Workspace/algo2-taller-abb/Conjunto.hpp
+iostream
+-
+
+/home/jscherman/Workspace/algo2-taller-abb/tests.cpp
+functional
+-
+future
+-
+gtest/gtest.h
+-
+iostream
+-
+vector
+-
+Conjunto.hpp
+/home/jscherman/Workspace/algo2-taller-abb/Conjunto.hpp
+

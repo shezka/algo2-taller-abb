@@ -79,32 +79,132 @@ class Conjunto
 
        typedef std::unique_ptr<Elem> Type;
 	// funciones auxiliares
-    void  borrarYMantener(const Elem& v, Nodo* miNodo, Nodo *mami);
+    void  borrarYMantener(Nodo* miNodo, Nodo *mami);
     Nodo* sucesorInOrder(Nodo* miNodo);
+    int cantHijitos(Nodo* miNodo);
+    void borradoFacil(Nodo* miNodo, Nodo* mami);
+    void borradoConUnHijo(Nodo* miNodo, Nodo* mami);
+    void borradoDificil(Nodo* miNodo, Nodo* mamisucesor);
     bool soyHijoMenor(Nodo* miNodo, Nodo* mami);
 
 };
+template <class Elem>
+int Conjunto<Elem>::cantHijitos(Conjunto<Elem>::Nodo *miNodo)
+{
+    if (miNodo->der == nullptr && miNodo->izq == nullptr)
+    { return 0; }
+    else if (miNodo->der == nullptr || miNodo->izq == nullptr)
+    { return 1;}
+    else {return 2;}
+}
 
 template <class Elem>
-void Conjunto<Elem>::borrarYMantener(const Elem& v, Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mami) {
-    if ((miNodo->der == nullptr) && (miNodo->izq == nullptr))
+void Conjunto<Elem>::borradoFacil(Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mami)
+{
+    if (mami->der == miNodo) {
+        mami->der = nullptr;
+    } else {
+        mami->izq = nullptr;
+    }
+    delete miNodo;
+}
+template <class Elem>
+void Conjunto<Elem>::borradoConUnHijo(Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mami)
+{
+    if (miNodo->der == nullptr)
     {
-        delete miNodo;
-    } else
-    {
-        if (miNodo->der == nullptr)
-        {
-            if (mami->der == miNodo)
-            {
+        if (miNodo != raiz_) {
+            if (mami->der == miNodo) {
                 mami->der = miNodo->izq;
-            } else {mami->izq = miNodo->izq;}
-             delete miNodo;
+            } else { mami->izq = miNodo->izq; }
+            delete miNodo;
         } else
         {
-            Nodo* sucesor = sucesorInOrder(miNodo);
-            miNodo->valor = sucesor->valor;
+            Nodo* aux = miNodo;
+            raiz_ = miNodo->izq;
+            miNodo = miNodo->izq;
+            mami = miNodo;
+            delete aux;
+        }
+    } else { //caso borrar donde solo tiene hijo derecho el nodo
+        if (miNodo->izq == nullptr) {
+            if (miNodo != raiz_) {
+                if (mami->der == miNodo) {
+                    mami->der = miNodo->der;
+                } else { mami->izq = miNodo->der; }
+                delete miNodo;
+            } else {
+                Nodo *aux = miNodo;
+                raiz_ = miNodo->der;
+                miNodo = miNodo->der;
+                delete aux;
+            }
+        }
+    }
+}
+template <class Elem>
+void Conjunto<Elem>::borradoDificil(Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mamisucesor)
+{
+ //   Nodo* mamisucesor = sucesorInOrder(miNodo);
+    if (mamisucesor != raiz_) {
+        miNodo->valor = mamisucesor->der->valor;
+        if (mamisucesor->der->izq != nullptr) {
+            mamisucesor->der = mamisucesor->der->izq;
 
-            delete sucesor;
+            delete mamisucesor->der->izq;
+            mamisucesor->der->izq = nullptr;
+        } else {
+
+            delete mamisucesor->der;
+            mamisucesor->der = nullptr;
+        }
+    } else
+    {
+        raiz_->valor = mamisucesor->izq->valor;
+        mamisucesor = mamisucesor->izq;
+        raiz_->izq = nullptr;
+        delete mamisucesor;
+    }
+
+}
+template <class Elem>
+void Conjunto<Elem>::borrarYMantener(Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mami) {
+    if (miNodo == raiz_)
+    {
+        if(cantHijitos(raiz_) == 0)
+        {
+            raiz_ = nullptr;
+            delete miNodo;
+        }
+        else if (cantHijitos(raiz_) == 1)
+        {
+            if (raiz_->izq == nullptr)
+            {
+                raiz_ = raiz_->der;
+                delete miNodo;
+            } else
+            {
+                raiz_ = raiz_->izq;
+                delete miNodo;
+            }
+        } else
+        {
+            borradoDificil(miNodo, sucesorInOrder(miNodo));
+        }
+    }
+    else
+    {
+        if (cantHijitos(miNodo) == 0)
+        {
+            borradoFacil(miNodo, mami);
+        }
+        else if (cantHijitos(miNodo) == 1)
+        {
+            borradoConUnHijo(miNodo, mami);
+        }
+        else
+        {
+            borradoDificil(miNodo, sucesorInOrder(miNodo));
         }
     }
 }
@@ -112,13 +212,15 @@ void Conjunto<Elem>::borrarYMantener(const Elem& v, Conjunto<Elem>::Nodo *miNodo
 template <class Elem>
 typename Conjunto<Elem>::Nodo* Conjunto<Elem>::sucesorInOrder(Conjunto<Elem>::Nodo *miNodo)
 {
-    Nodo* actual = miNodo;
-    if (actual != nullptr) actual = actual->izq;
+    Nodo* actual = miNodo->izq;
+    Nodo* mami = miNodo;
+   // if (actual != nullptr) actual = actual->izq;
     while (actual != nullptr && actual->der != nullptr)
     {
+        mami = actual;
         actual = actual->der;
     }
-    return actual; //ver si no pierdo memoriass
+    return mami; //ver si no pierdo memoriass
 }
 template <class Elem>
 bool Conjunto<Elem>::soyHijoMenor(Conjunto<Elem>::Nodo *miNodo, Conjunto<Elem>::Nodo *mami)
@@ -139,7 +241,7 @@ Conjunto<Elem>::~Conjunto() {
     Nodo* actual = raiz_;
     while (raiz_ != nullptr)
     {
-        remover(raiz_->valor);
+        borrarYMantener(raiz_, nullptr);
     }
 }
 
@@ -211,8 +313,10 @@ template <class Elem>
 void Conjunto<Elem>::remover(const Elem& miElem) {
     Nodo* mami = nullptr;
     Nodo* actual = raiz_;
-    while (actual != nullptr)
+    bool removido = false;
+    while (actual != nullptr && !removido)
     {
+        Nodo* actualix = actual;
         if (actual->valor > miElem)
         {
             actual = actual->izq;
@@ -221,25 +325,35 @@ void Conjunto<Elem>::remover(const Elem& miElem) {
             if (actual->valor < miElem)
             {
                 actual = actual->der;
-            } else { borrarYMantener(miElem, actual, mami);
-                cantElems--;}
+            } else {
+                borrarYMantener(actual, mami);
+                cantElems--;
+                removido = true; //al pedo
+            }
         }
 
-        mami = actual;
+        if (actual != nullptr)    mami = actualix;
+
     }
 }
 
 template <class Elem>
 const Elem&  Conjunto<Elem>::minimo() const {
 	// Completar con implementación
-  return raiz_->valor;
+    Nodo* actual = raiz_;
+    while (actual->izq != nullptr)
+    { actual = actual->izq; }
+  return actual->valor;
 }
 
 template <class Elem>
 const Elem&  Conjunto<Elem>::maximo() const
 {
+    Nodo* actual = raiz_;
+    while (actual->der != nullptr) actual = actual->der;
+
 	// Completar con implementación
-  return raiz_->valor;
+  return actual->valor;
 }
 
 template <class Elem>
